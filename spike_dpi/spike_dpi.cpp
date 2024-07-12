@@ -756,6 +756,7 @@ void step_spike(long long rtl_time, long long rtl_pc,
             riscv_excpt_map[rtl_exception_cause],
             rtl_exception_cause),
     fprintf(compare_log_fp, "==========================================\n");
+    p->step(1);
     return;
   }
 
@@ -792,14 +793,13 @@ void step_spike(long long rtl_time, long long rtl_pc,
     return;
   }
 
-
   p->step(1);
 
   auto instret  = p->get_state()->minstret->read();
   static reg_t prev_instret = -1;
   static bool prev_minstret_access = false;
   if (prev_instret == instret && !prev_minstret_access) {
-    fprintf(compare_log_fp, "instret = %08x, p->step called\n", instret);
+    fprintf(compare_log_fp, "instret = %08lx, p->step called\n", instret);
     p->step(1);
   }
   prev_minstret_access = false;
@@ -1262,12 +1262,12 @@ void step_spike_wo_cmp(int steps)
     auto iss_insn = p->get_state()->insn;
     auto iss_priv = p->get_state()->last_inst_priv;
     sprintf (spike_out_str, "Spike Result : %ld : PC=[%016lx] (%c) %08lx %s\n",
-             instret,
+             instret->read(),
              iss_pc,
              iss_priv == 0 ? 'U' : iss_priv == 2 ? 'S' : 'M',
-             iss_insn, disasm->disassemble(iss_insn).c_str());
-    fprintf(compare_log_fp, spike_out_str);
-    fprintf(stderr, spike_out_str);
+             iss_insn.bits(), disasm->disassemble(iss_insn).c_str());
+    fprintf(compare_log_fp, "%s", spike_out_str);
+    fprintf(stderr, "%s", spike_out_str);
   }
 }
 
@@ -1360,7 +1360,7 @@ int main(int argc, char **argv)
     auto cycle = p->get_state()->mcycle->read();
 
     if (log) {
-      fprintf(compare_log_fp, "%10ld %10ld %08lx\n", instret, cycle, iss_pc);
+      fprintf(compare_log_fp, "%10ld %10ld %08lx\n", instret->read(), cycle, iss_pc);
 
       for (auto &iss_rd: p->get_state()->log_mem_read) {
         fprintf(compare_log_fp, "MR%d(0x%0*lx)=>%0*lx\n", std::get<2>(iss_rd),

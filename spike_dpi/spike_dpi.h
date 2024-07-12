@@ -1,5 +1,5 @@
 #pragma once
-#include <svdpi.h>
+#include "svdpi.h"
 
 extern "C" {
   void initial_spike (const char *filename, int rv_xlen, int rv_flen, const char* ext_isa);

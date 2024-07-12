@@ -1,5 +1,5 @@
 #pragma once
-#include <svdpi.h>
+#include "svdpi.h"
 
 extern "C" {
   void initial_gshare(long long bhr_length,

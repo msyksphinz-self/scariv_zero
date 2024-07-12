@@ -1,11 +1,16 @@
 VERILATOR_HOME ?= /usr/local/share/verilator
 
-CFLAGS += -I$(VERILATOR_HOME)/include/vltstd/
-CFLAGS += -I$(abspath riscv-isa-sim)/riscv
+CFLAGS += -iquote $(VERILATOR_HOME)/include/vltstd/
+CFLAGS += -g
+CFLAGS += -O0
+CFLAGS += -fPIC
+CFLAGS += -std=c++2a
+CFLAGS += -iquote $(abspath riscv-isa-sim)
 CFLAGS += -I$(abspath riscv-isa-sim)
-CFLAGS += -I$(abspath riscv-isa-sim)/softfloat/
-CFLAGS += -I$(abspath riscv-isa-sim)/fesvr/
-CFLAGS += -I$(abspath ../cpp/)
+CFLAGS += -iquote $(abspath riscv-isa-sim)/riscv
+# CFLAGS += -iquote $(abspath riscv-isa-sim)/softfloat/
+# CFLAGS += -I$(abspath riscv-isa-sim)/fesvr/
+CFLAGS += -iquote $(abspath ../cpp/)
 
 HAVE_INT128 := yes
 HAVE_DLOPEN := yes
@@ -20,7 +25,7 @@ CLEAN_FILES += libspike_dpi.a
 CLEAN_FILES += spike_dpi.o
 
 spike_dpi.o: spike_dpi.cpp
-	g++ $^ -c -g -o $@ $(CFLAGS)
+	g++ $(CFLAGS) $^ -c -o $@
 
 libspike_dpi.a: $(riscv_objs)
 	ar rcs $@ $^

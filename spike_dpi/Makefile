@@ -25,13 +25,13 @@ CFLAGS += -I$(VCS_HOME)/include/
 # CFLAGS += -lriscv
 
 EXE_CFLAGS += -g
-EXE_CFLAGS += --std=c++17
+EXE_CFLAGS += --std=c++2a
 # EXE_CFLAGS += -Wl,--export-dynamic
 EXE_CFLAGS += -Wl,-rpath,/usr/local/lib
 EXE_CFLAGS += -I$(abspath riscv-isa-sim)/riscv
 EXE_CFLAGS += -I$(abspath riscv-isa-sim)/
-EXE_CFLAGS += -I$(abspath riscv-isa-sim)/softfloat/
-EXE_CFLAGS += -I$(abspath riscv-isa-sim)/fesvr/
+# EXE_CFLAGS += -I$(abspath riscv-isa-sim)/softfloat/
+# EXE_CFLAGS += -I$(abspath riscv-isa-sim)/fesvr/
 EXE_CFLAGS += -I$(abspath ../cpp/)
 EXE_CFLAGS += $(abspath riscv-isa-sim)/libspike_main.a
 EXE_CFLAGS += $(abspath riscv-isa-sim)/libriscv.a
