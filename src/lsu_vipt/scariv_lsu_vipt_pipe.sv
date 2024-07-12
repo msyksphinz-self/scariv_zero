@@ -809,7 +809,7 @@ always_ff @ (posedge i_clk) begin
   r_ex4_hazard_typ   <= r_ex3_hazard_typ;
   r_ex4_hazard_index <= r_ex3_hazard_index;
 
-  r_flush_report_valid  <= r_ex3_issue.valid & ldq_haz_check_if.ex3_haz_valid & ~w_ex3_ldq_br_flush;
+  r_flush_report_valid  <= r_ex3_issue.valid & ldq_haz_check_if.ex3_haz_valid & ~w_ex3_ldq_br_flush & ~w_ex3_commit_flush & ~w_ex3_br_flush;
   r_flush_report_cmt_id <= ldq_haz_check_if.ex3_haz_cmt_id;
   r_flush_report_grp_id <= ldq_haz_check_if.ex3_haz_grp_id;
 
