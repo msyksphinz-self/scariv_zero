@@ -411,8 +411,10 @@ assign w_f2_inst_buffer_in.tlb_except_valid = r_f2_tlb_except_valid;
 assign w_f2_inst_buffer_in.tlb_except_cause = r_f2_tlb_except_cause;
 
 
-scariv_inst_buffer
-u_scariv_inst_buffer
+// scariv_inst_buffer
+// u_scariv_inst_buffer
+scariv_front_decoder
+u_front_decoder
   (
    .i_clk     (i_clk    ),
    .i_reset_n (i_reset_n),

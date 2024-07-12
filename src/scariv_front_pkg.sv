@@ -19,6 +19,30 @@ typedef struct packed {
 `endif // SIMULATION
 } front_t;
 
+typedef struct packed {
+  logic          valid;
+  logic [31: 0]                       inst;
+  logic [$clog2(scariv_lsu_pkg::ICACHE_DATA_B_W)-1: 0] cache_pos;
+
+  logic                               rvc_inst_valid;
+  logic [15: 0]                       rvc_inst;
+
+  logic                               fragmented;
+
+  decoder_inst_cat_pkg::inst_cat_t    cat;
+  decoder_inst_cat_pkg::inst_subcat_t subcat;
+} inst_t;
+
+typedef struct packed {
+  logic [riscv_pkg::VADDR_W-1:1]                  pc_addr;
+  logic                                           fragmented;
+  inst_t [scariv_conf_pkg::ICACHE_DATA_W/16-1: 0] inst;
+
+`ifdef SIMULATION
+  scariv_pkg::vaddr_t            pc_addr_debug;
+`endif // SIMULATION
+} decoder_inst_t;
+
 endpackage // scariv_front_pkg
 
 interface scariv_front_if;
