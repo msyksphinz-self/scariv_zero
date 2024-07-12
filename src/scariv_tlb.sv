@@ -83,13 +83,17 @@ typedef enum logic [1:0] {
 riscv_common_pkg::priv_t r_status_prv;
 riscv_pkg::xlen_t        r_csr_status;
 riscv_pkg::xlen_t        r_csr_satp;
+logic        r_csr_update_dly;
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
+    r_csr_update_dly <= 1'b0;
+
     r_status_prv <= riscv_common_pkg::PRIV_M;
     r_csr_status <= riscv_pkg::init_mstatus;
     r_csr_satp   <= 'h0;
   end else begin
+    r_csr_update_dly <= i_csr_update;
     if (i_csr_update) begin
       r_status_prv <= i_status_prv;
       r_csr_status <= i_csr_status;
@@ -515,7 +519,8 @@ assign w_tlb_resp_miss = w_do_refill | w_tlb_miss;
 assign o_tlb_resp.miss         = w_tlb_resp_miss; /* || multiplehits */;
 assign o_tlb_resp.paddr        = {w_ppn, i_tlb_req.vaddr[11: 0]};
 
-assign o_tlb_update = (r_state_dly != ST_READY) & (r_state == ST_READY);
+assign o_tlb_update = (r_state_dly != ST_READY) & (r_state == ST_READY) |
+                      r_csr_update_dly;
 
 assign o_tlb_resp_miss = w_tlb_resp_miss;
 

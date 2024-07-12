@@ -256,6 +256,9 @@ class verilator_sim:
         select_test = list(filter(lambda x: ((x["name"] == testcase) or
                                              (testcase in x["group"]) and
                                              (x["skip"] != 1 if "skip" in x else True)) , self.test_table))
+        if len(select_test) == 0:
+            return
+
         self.max_testname_length = max(map(lambda x: len(x["name"]), select_test))
         self.test_length = len(select_test)
 

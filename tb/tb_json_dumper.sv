@@ -24,7 +24,7 @@ int json_fp;
       // ICache
       u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_frontend.u_scariv_icache.dump_json(json_fp);
       // Inst Buffer
-      u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_frontend.u_scariv_inst_buffer.dump_json(json_fp);
+      u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_frontend.u_front_decoder.dump_json(json_fp);
       // Rename --> Dispatch
       u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rename.dump_json("int", json_fp);
 

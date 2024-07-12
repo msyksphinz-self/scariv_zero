@@ -91,6 +91,10 @@
 
 ../src/simple_arbiter.sv
 ../src/scariv_frontend.sv
+
+../src/scariv_front_decoder.sv
+../src/scariv_front_expander.sv
+../src/scariv_rvc_type_detector.sv
 ../src/scariv_front_addr_gen.sv
 
 ../src/scariv_predictor.sv

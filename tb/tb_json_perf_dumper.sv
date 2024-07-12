@@ -33,7 +33,7 @@ always_ff @ (negedge w_clk, negedge w_scariv_reset_n) begin
       $fwrite(perf_fp, "\"%t\" : {\n", $time);
 
       // Instruction Buffer
-      u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_frontend.u_scariv_inst_buffer.dump_perf(perf_fp);
+      u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_frontend.u_front_decoder.dump_perf(perf_fp);
       // Commit Rate
       u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.dump_perf(perf_fp);
       // ICache

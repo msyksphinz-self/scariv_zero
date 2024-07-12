@@ -4,6 +4,7 @@ set PROJ_NAME scariv_tile_wrapper
 set PROJ_DIR .
 set RTL_ROOT_DIR ../../src
 set TOP_NAME scariv_tile_wrapper
+set TOP_NAME scariv_front_decoder
 # set TOP_NAME scariv_phy_registers
 # set TOP_NAME distributed_mp_ram
 
