@@ -82,7 +82,7 @@ void step_ras (long long rtl_commit_time,
 
   if (is_call(iss_insn.bits())) {
     uint64_t stack_val = iss_pc + inst_size(iss_insn.bits());
-    fprintf (ras_log_fp, "%lld : CMT RAS PUSH : PC = %08lx (%02d,%02d), RAS[%u]<=%08lx\n",
+    fprintf (ras_log_fp, "%lld : CMT RAS PUSH : PC = %08lx (%02d,%02d), RAS[%zu]<=%08lx\n",
              rtl_commit_time,
              iss_pc,
              rtl_commit_cmt_id, rtl_commit_grp_id,
@@ -92,7 +92,7 @@ void step_ras (long long rtl_commit_time,
     iss_ras_head = (iss_ras_head + 1) % iss_ras_length;
   }
   if (is_ret(iss_insn.bits())) {
-    fprintf (ras_log_fp, "%lld : CMT RAS POP  : PC = %08lx (%02d,%02d), RAS[%u]=>%08lx, TARGET=%08lx : %s, RTL RAS[%u]=>%08lx : %s\n",
+    fprintf (ras_log_fp, "%lld : CMT RAS POP  : PC = %08lx (%02d,%02d), RAS[%zu]=>%08lx, TARGET=%08lx : %s, RTL RAS[%lld]=>%08llx : %s\n",
              rtl_commit_time,
              iss_pc,
              rtl_commit_cmt_id, rtl_commit_grp_id,
@@ -113,7 +113,7 @@ void rtl_push_ras (long long rtl_time,
                    long long rtl_ras_index,
                    long long rtl_ras_value)
 {
-  fprintf (ras_log_fp, "%lld : RTL RAS PUSH : PC = %08llx RAS[%u]<=%08llx\n",
+  fprintf (ras_log_fp, "%lld : RTL RAS PUSH : PC = %08llx RAS[%lld]<=%08llx\n",
            rtl_time, rtl_pc_vaddr, rtl_ras_index, rtl_ras_value);
 }
 
@@ -122,7 +122,7 @@ void rtl_pop_ras (long long rtl_time,
                   long long rtl_ras_index,
                   long long rtl_ras_value)
 {
-  fprintf (ras_log_fp, "%lld : RTL RAS POP  : PC = %08llx RAS[%u]=>%08llx\n",
+  fprintf (ras_log_fp, "%lld : RTL RAS POP  : PC = %08llx RAS[%lld]=>%08llx\n",
            rtl_time, rtl_pc_vaddr, rtl_ras_index, rtl_ras_value);
 }
 
@@ -131,6 +131,6 @@ void rtl_flush_ras (long long rtl_time,
                     long long rtl_pc_vaddr,
                     long long rtl_ras_index)
 {
-  fprintf (ras_log_fp, "%lld : RTL RAS FLUSH: PC = %08llx (%02d,%02d), RAS_INDEX<=%u\n",
+  fprintf (ras_log_fp, "%lld : RTL RAS FLUSH: PC = %08llx (%02d,%02d), RAS_INDEX<=%lld\n",
            rtl_time, rtl_pc_vaddr, rtl_cmt_id, rtl_grp_id, rtl_ras_index);
 }
