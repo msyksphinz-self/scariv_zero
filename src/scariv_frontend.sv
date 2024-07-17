@@ -476,9 +476,11 @@ ic_block_t w_f2_call_ret_tree;
 assign w_f2_btb_gshare_hit_array_tree = 'h0;
 bit_tree_lsb #(.WIDTH(scariv_lsu_pkg::ICACHE_DATA_B_W/2)) s2_call_ret_tree_lsb (.in(w_ras_search_if.f2_is_call | w_ras_search_if.f2_is_ret), .out(w_f2_call_ret_tree));
 
-assign w_f1_predict_valid = r_f1_valid & ~r_f1_clear & w_f1_ubtb_predict_if.predict_valid;
+// assign w_f1_predict_valid = r_f1_valid & ~r_f1_clear & w_f1_ubtb_predict_if.predict_valid;
+assign w_f1_predict_valid = 1'b0;
 
-assign w_f2_predict_valid        = r_f2_valid & ~r_f2_clear & w_f2_predict_valid_gshare & ~w_f2_btb_predict_match;
+// assign w_f2_predict_valid        = r_f2_valid & ~r_f2_clear & w_f2_predict_valid_gshare & ~w_f2_btb_predict_match;
+assign w_f2_predict_valid = 1'b0;
 assign w_f2_predict_target_vaddr = w_f2_predict_target_vaddr_gshare;
 
 assign w_f2_btb_predict_match = w_f2_predict_valid_gshare & r_f2_ubtb_predict_valid & r_f2_ubtb_info.taken &

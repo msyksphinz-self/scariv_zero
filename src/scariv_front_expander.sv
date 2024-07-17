@@ -92,14 +92,14 @@ end endgenerate
 always_comb begin
   /* verilator lint_off CASEX */
   casex (w_f2_inst_shifted_valid)
-    8'b1xxx_xxxx : w_f2_fragmented = ~(~w_f2_inst_16bit_valid[7] | w_f2_inst_is_rvc[7]);
-    8'b01xx_xxxx : w_f2_fragmented = ~(~w_f2_inst_16bit_valid[6] | w_f2_inst_is_rvc[6]);
-    8'b001x_xxxx : w_f2_fragmented = ~(~w_f2_inst_16bit_valid[5] | w_f2_inst_is_rvc[5]);
-    8'b0001_xxxx : w_f2_fragmented = ~(~w_f2_inst_16bit_valid[4] | w_f2_inst_is_rvc[4]);
-    8'b0000_1xxx : w_f2_fragmented = ~(~w_f2_inst_16bit_valid[3] | w_f2_inst_is_rvc[3]);
-    8'b0000_01xx : w_f2_fragmented = ~(~w_f2_inst_16bit_valid[2] | w_f2_inst_is_rvc[2]);
-    8'b0000_001x : w_f2_fragmented = ~(~w_f2_inst_16bit_valid[1] | w_f2_inst_is_rvc[1]);
-    8'b0000_0001 : w_f2_fragmented = ~(~w_f2_inst_16bit_valid[0] | w_f2_inst_is_rvc[0]);
+    8'b1xxx_xxxx : w_f2_fragmented = w_f2_inst_16bit_valid[7] & ~w_f2_inst_is_rvc[7];
+    8'b01xx_xxxx : w_f2_fragmented = w_f2_inst_16bit_valid[6] & ~w_f2_inst_is_rvc[6];
+    8'b001x_xxxx : w_f2_fragmented = w_f2_inst_16bit_valid[5] & ~w_f2_inst_is_rvc[5];
+    8'b0001_xxxx : w_f2_fragmented = w_f2_inst_16bit_valid[4] & ~w_f2_inst_is_rvc[4];
+    8'b0000_1xxx : w_f2_fragmented = w_f2_inst_16bit_valid[3] & ~w_f2_inst_is_rvc[3];
+    8'b0000_01xx : w_f2_fragmented = w_f2_inst_16bit_valid[2] & ~w_f2_inst_is_rvc[2];
+    8'b0000_001x : w_f2_fragmented = w_f2_inst_16bit_valid[1] & ~w_f2_inst_is_rvc[1];
+    8'b0000_0001 : w_f2_fragmented = w_f2_inst_16bit_valid[0] & ~w_f2_inst_is_rvc[0];
     default      : w_f2_fragmented = 1'b0;
   endcase // casex (w_f2_inst_shifted_valid)
 end // always_comb
@@ -154,11 +154,11 @@ o_f2_expand_inst[target].fragmented     = 1'b0; \
 o_f2_expand_inst[target].cache_pos      = index; \
 o_f2_expand_inst[target].rvc_inst_valid = 1'b1; \
 o_f2_expand_inst[target].rvc_inst       = w_f2_inst_shifted[index*16 +: 16]; \
-o_f2_expand_inst[target].cat            = w_f2_rvc_cat          [index]; \
-o_f2_expand_inst[target].subcat         = decoder_inst_cat_pkg::INST_SUBCAT__;
+o_f2_expand_inst[target].cat            = w_f2_rvc_cat     [index]; \
+o_f2_expand_inst[target].subcat         = w_f2_rvc_subcat  [index];
 
 `define ASSIGN_RVI(target,index) \
-o_f2_expand_inst[target].valid          = i_f2_inst.valid & w_f2_inst_shifted_valid[index]; \
+o_f2_expand_inst[target].valid          = i_f2_inst.valid & (&w_f2_inst_shifted_valid[index +: 2]); \
 o_f2_expand_inst[target].inst           = w_f2_inst_shifted [index*16 +: 32]; \
 o_f2_expand_inst[target].fragmented     = 1'b0; \
 o_f2_expand_inst[target].cache_pos      = index; \
@@ -279,7 +279,7 @@ generate if (scariv_conf_pkg::ICACHE_DATA_W == 128) begin : gen_rvc_rvi_selectio
       `ASSIGN_ZERO(6);
     end
 
-    if (/* countones_7bit(w_f2_inst_is_rvc[6:0] | r_f2_fragmented) == 'h7*/ &(w_f2_inst_is_rvc[6:0] | r_f2_fragmented)) begin
+    if (/* countones_7bit(w_f2_inst_is_rvc[6:0] | r_f2_fragmented) == 'h7*/ &(w_f2_inst_is_rvc[6:0] | r_f2_fragmented) && w_f2_inst_is_rvc[7]) begin
       `ASSIGN_RVC (7, 7);
     end else begin
       `ASSIGN_ZERO(7);

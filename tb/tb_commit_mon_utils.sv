@@ -59,7 +59,7 @@ always_ff @ (negedge w_clk, negedge w_scariv_reset_n) begin
           $write ("DEADLOCKED : %t PC=%010x (%02d,%02d) %08x DASM(%08x)\n",
                   $time,
                   /* verilator lint_off WIDTH */
-                  committed_rob_payload.disp[grp_idx].pc_addr << 1,
+                  committed_rob_payload.disp[grp_idx].pc_addr,
                   u_scariv_subsystem_wrapper.u_scariv_subsystem.u_tile.u_rob.w_out_cmt_entry_id,
                   1 << grp_idx,
                   committed_rob_payload.disp[grp_idx].inst,

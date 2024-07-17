@@ -53,23 +53,28 @@ logic    w_ptr_out_fire;
 scariv_front_pkg::inst_t[scariv_conf_pkg::ICACHE_DATA_W/16-1: 0] w_f2_expand_inst;
 scariv_pkg::vaddr_t                                              w_f2_pc;
 
-scariv_pkg::grp_id_t                           w_f3_inst_disp_mask;
-logic [scariv_conf_pkg::ICACHE_DATA_W/16-1: 0] r_f3_flag_dispatched;
-logic [scariv_conf_pkg::DISP_SIZE: 0]          w_f3_inst_disp_mask_tmp;
+logic [scariv_conf_pkg::ICACHE_DATA_W/16-1: 0] r_backup_flag_dispatched;
+logic [scariv_conf_pkg::ICACHE_DATA_W/16-1: 0] w_backup_front_inst_valids;
+scariv_front_pkg::decoder_inst_t               r_backup_front_inst; // for instruction shifting
 
-logic                     w_f4_ibuf_front_valid_next;
+scariv_pkg::grp_id_t                           w_f3_inst_disp_mask;
+logic [scariv_conf_pkg::DISP_SIZE: 0]          w_f3_inst_disp_mask_tmp;
+logic [scariv_conf_pkg::ICACHE_DATA_W/16-1: 0] w_f3_flag_dispatched_next;
+
+logic                     w_f3_valid_next;
+logic                     w_f3_fire_next;
 scariv_front_pkg::front_t w_ibuf_front_payload_next;
 logic [scariv_conf_pkg::ICACHE_DATA_W/16-1: 0] w_f3_front_inst_valids;
-logic [scariv_conf_pkg::ICACHE_DATA_W/16-1: 0] r_f3_front_inst_valids;
 
 logic                                          w_f3_all_inst_dispatched;
-assign w_f3_all_inst_dispatched = r_f3_front_inst_valids != 0 &&
-                                  (r_f3_flag_dispatched == r_f3_front_inst_valids);
+logic                                          w_f3_inst_queue_sel;
+assign w_f3_all_inst_dispatched = (w_backup_front_inst_valids != 0) ? (w_f3_flag_dispatched_next == w_backup_front_inst_valids) :
+                                  (w_f3_inst_disp_mask == w_f3_front_inst_valids);
+
+assign w_f3_inst_queue_sel = (w_backup_front_inst_valids == 'h0) & w_f3_front_inst_valid;
 
 assign w_ptr_in_fire  = i_f2_inst.valid & o_inst_ready;
-assign w_ptr_out_fire = !w_inst_buf_empty &
-                        ((r_f3_front_inst_valids == 'h0) |    // F3 instruction FF is empty or,
-                         w_f3_all_inst_dispatched);  // F3 all instructions are dispateched
+assign w_ptr_out_fire = !w_inst_buf_empty & w_f3_inst_queue_sel & w_f3_fire_next;
 
 // -----------------------
 // Decoder / RVC Expander
@@ -95,7 +100,6 @@ scariv_front_pkg::decoder_inst_t w_f2_front_inst;
 logic                            w_f3_front_inst_valid;
 scariv_front_pkg::decoder_inst_t w_f3_front_inst;
 scariv_front_pkg::decoder_inst_t w_f3_front_inst_from_queue;
-scariv_front_pkg::decoder_inst_t r_f3_front_inst; // for instruction shifting
 scariv_front_pkg::decoder_inst_t w_f3_front_inst_next; // for instruction shifting
 
 assign w_f2_front_inst.inst       = w_f2_expand_inst;
@@ -134,15 +138,16 @@ assign o_inst_ready = !w_inst_buf_full;
 
 generate for (genvar idx = 0; idx < scariv_conf_pkg::ICACHE_DATA_W/16; idx++) begin : gen_f3_loop
   assign w_f3_front_inst_valids[idx] = w_f3_front_inst.inst[idx].valid;
+  assign w_backup_front_inst_valids[idx] = r_backup_front_inst.inst[idx].valid;
 end endgenerate
 
 
 always_comb begin
 
   // Selection of the instruction decoder
-  w_f3_front_inst = w_ptr_out_fire ? w_f3_front_inst_from_queue : r_f3_front_inst;
+  w_f3_front_inst = w_f3_inst_queue_sel ? w_f3_front_inst_from_queue : r_backup_front_inst;
 
-  w_f3_front_inst_next.pc_addr = w_f3_front_inst.pc_addr;
+  w_f3_front_inst_next.pc_addr       = w_f3_front_inst.pc_addr;
 `ifdef SIMULATION
   w_f3_front_inst_next.pc_addr_debug = w_f3_front_inst.pc_addr_debug;
 `endif // SIMULATION
@@ -161,6 +166,10 @@ always_comb begin
         for (int idx = scariv_conf_pkg::ICACHE_DATA_W/16 - 4; idx < scariv_conf_pkg::ICACHE_DATA_W/16; idx++) begin
           w_f3_front_inst_next.inst[idx].valid = 1'b0;
         end
+//         w_f3_front_inst_next.pc_addr       = w_f3_front_inst.pc_addr       + w_f3_front_inst.inst[4].cache_pos;
+// `ifdef SIMULATION
+//         w_f3_front_inst_next.pc_addr_debug = w_f3_front_inst.pc_addr_debug + {w_f3_front_inst.inst[4].cache_pos, 1'b0};
+// `endif // SIMULATION
       end
       4'b01xx : begin
         for (int idx = 0; idx < scariv_conf_pkg::ICACHE_DATA_W/16 - 3; idx++) begin
@@ -169,6 +178,10 @@ always_comb begin
         for (int idx = scariv_conf_pkg::ICACHE_DATA_W/16 - 3; idx < scariv_conf_pkg::ICACHE_DATA_W/16; idx++) begin
           w_f3_front_inst_next.inst[idx].valid = 1'b0;
         end
+//         w_f3_front_inst_next.pc_addr       = w_f3_front_inst.pc_addr       + w_f3_front_inst.inst[3].cache_pos;
+// `ifdef SIMULATION
+//         w_f3_front_inst_next.pc_addr_debug = w_f3_front_inst.pc_addr_debug + {w_f3_front_inst.inst[3].cache_pos, 1'b0};
+// `endif // SIMULATION
       end
       4'b001x : begin
         for (int idx = 0; idx < scariv_conf_pkg::ICACHE_DATA_W/16 - 2; idx++) begin
@@ -177,6 +190,10 @@ always_comb begin
         for (int idx = scariv_conf_pkg::ICACHE_DATA_W/16 - 2; idx < scariv_conf_pkg::ICACHE_DATA_W/16; idx++) begin
           w_f3_front_inst_next.inst[idx].valid = 1'b0;
         end
+//         w_f3_front_inst_next.pc_addr       = w_f3_front_inst.pc_addr       + w_f3_front_inst.inst[2].cache_pos;
+// `ifdef SIMULATION
+//         w_f3_front_inst_next.pc_addr_debug = w_f3_front_inst.pc_addr_debug + {w_f3_front_inst.inst[2].cache_pos, 1'b0};
+// `endif // SIMULATION
       end
       4'b0001 : begin
         for (int idx = 0; idx < scariv_conf_pkg::ICACHE_DATA_W/16 - 1; idx++) begin
@@ -185,6 +202,10 @@ always_comb begin
         for (int idx = scariv_conf_pkg::ICACHE_DATA_W/16 - 1; idx < scariv_conf_pkg::ICACHE_DATA_W/16; idx++) begin
           w_f3_front_inst_next.inst[idx].valid = 1'b0;
         end
+//         w_f3_front_inst_next.pc_addr       = w_f3_front_inst.pc_addr       + w_f3_front_inst.inst[1].cache_pos;
+// `ifdef SIMULATION
+//         w_f3_front_inst_next.pc_addr_debug = w_f3_front_inst.pc_addr_debug + {w_f3_front_inst.inst[1].cache_pos, 1'b0};
+// `endif // SIMULATION
       end
       default : begin
         for (int idx = 0; idx < scariv_conf_pkg::ICACHE_DATA_W/16; idx++) begin
@@ -197,23 +218,21 @@ end // always_comb
 
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    r_f3_front_inst <= 'h0;
+    r_backup_front_inst <= 'h0;
 
-    r_f3_front_inst_valids <= 'h0;
+    w_backup_front_inst_valids <= 'h0;
   end else begin
-    r_f3_front_inst <= w_f3_front_inst_next;
 
     if (w_flush_pipeline) begin
-      r_f3_front_inst_valids <= 'h0;
-    end else if (w_ptr_out_fire) begin
       for (int idx = 0; idx < scariv_conf_pkg::ICACHE_DATA_W/16; idx++) begin
-        r_f3_front_inst_valids[idx] <= w_f3_front_inst_from_queue.inst[idx].valid;
+        r_backup_front_inst.inst[idx].valid <= 1'b0;
       end
-    end else if (w_f3_all_inst_dispatched) begin
-      r_f3_front_inst_valids <= 'h0;
+    end else if (w_f3_fire_next) begin
+      r_backup_front_inst <= w_f3_front_inst_next;
     end
   end
 end
+
 
 typedef enum logic [ 3: 0] {
   INST_KIND_ARITH        = 0,
@@ -315,42 +334,47 @@ bit_extract_lsb #(.WIDTH(scariv_conf_pkg::DISP_SIZE + 1)) u_inst_msb (.in({1'b1,
 
 assign w_f3_inst_disp_mask = w_f3_inst_disp_mask_tmp - 1;
 
+always_comb begin
+  if (w_f3_fire_next) begin
+    /* verilator lint_off CASEINCOMPLETE */
+    casex (w_f3_inst_disp_mask)
+      4'b1xxx : w_f3_flag_dispatched_next = (r_backup_flag_dispatched << 4) | w_f3_inst_disp_mask;
+      4'b01xx : w_f3_flag_dispatched_next = (r_backup_flag_dispatched << 3) | w_f3_inst_disp_mask;
+      4'b001x : w_f3_flag_dispatched_next = (r_backup_flag_dispatched << 2) | w_f3_inst_disp_mask;
+      4'b0001 : w_f3_flag_dispatched_next = (r_backup_flag_dispatched << 1) | w_f3_inst_disp_mask;
+    endcase // casex (w_f3_inst_disp_mask)
+  end
+end
+
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    r_f3_flag_dispatched <= 'h0;
+    r_backup_flag_dispatched <= 'h0;
   end else begin
     if (w_flush_pipeline) begin
-      r_f3_flag_dispatched <= 'h0;
+      r_backup_flag_dispatched <= 'h0;
     end else if (w_f3_all_inst_dispatched) begin
-      r_f3_flag_dispatched <= w_f3_inst_disp_mask;
-    end else begin
-      /* verilator lint_off CASEINCOMPLETE */
-      casex (w_f3_inst_disp_mask)
-        4'b1xxx : r_f3_flag_dispatched <= (r_f3_flag_dispatched << 4) | w_f3_inst_disp_mask;
-        4'b01xx : r_f3_flag_dispatched <= (r_f3_flag_dispatched << 3) | w_f3_inst_disp_mask;
-        4'b001x : r_f3_flag_dispatched <= (r_f3_flag_dispatched << 2) | w_f3_inst_disp_mask;
-        4'b0001 : r_f3_flag_dispatched <= (r_f3_flag_dispatched << 1) | w_f3_inst_disp_mask;
-      endcase // casex (w_f3_inst_disp_mask)
+      r_backup_flag_dispatched <= w_f3_inst_disp_mask;
+    end else if (w_f3_fire_next) begin
+      r_backup_flag_dispatched <= w_f3_flag_dispatched_next;
     end
   end
 end // always_ff @ (posedge i_clk, negedge i_reset_n)
 
 
-logic w_f4_inst_buffer_fire_next;
-assign w_f4_ibuf_front_valid_next = |w_f3_inst_disp_mask;
-assign w_f4_inst_buffer_fire_next  = w_f4_ibuf_front_valid_next & ibuf_front_if.ready;
+assign w_f3_valid_next = |w_f3_inst_disp_mask;
+assign w_f3_fire_next  = ~r_ibuf_front_if_valid_raw | ibuf_front_if.ready;
 
-logic ibuf_front_if_valid_raw;
-assign ibuf_front_if.valid = ibuf_front_if_valid_raw & ~w_flush_pipeline;
+logic r_ibuf_front_if_valid_raw;
+assign ibuf_front_if.valid = r_ibuf_front_if_valid_raw & ~w_flush_pipeline;
 always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
-    ibuf_front_if_valid_raw <= 1'b0;
+    r_ibuf_front_if_valid_raw <= 1'b0;
   end else begin
     if (w_flush_pipeline) begin
-      ibuf_front_if_valid_raw <= 1'b0;
-    end else if (ibuf_front_if.ready) begin
-      ibuf_front_if_valid_raw  <= w_f4_ibuf_front_valid_next;
-      ibuf_front_if.payload <= w_ibuf_front_payload_next;
+      r_ibuf_front_if_valid_raw <= 1'b0;
+    end else if (w_f3_fire_next) begin
+      r_ibuf_front_if_valid_raw <= w_f3_valid_next;
+      ibuf_front_if.payload     <= w_ibuf_front_payload_next;
     end
   end
 end
@@ -515,7 +539,7 @@ always_ff @ (posedge i_clk, negedge i_reset_n) begin
   if (!i_reset_n) begin
     r_kanata_cycle_count <= 'h0;
   end else begin
-    if (w_f4_ibuf_front_valid_next & ibuf_front_if.ready) begin
+    if (w_f3_valid_next & ibuf_front_if.ready) begin
       r_kanata_cycle_count <= r_kanata_cycle_count + $countones(w_valid_grp_id);
     end
   end
