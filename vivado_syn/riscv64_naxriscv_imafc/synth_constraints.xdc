@@ -1,0 +1,1 @@
+../riscv32_naxriscv_ima/synth_constraints.xdc

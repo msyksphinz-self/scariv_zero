@@ -1,0 +1,4 @@
+*.synth.v
+*ff_list.txt
+*nets_list.txt
+NaxRiscv.v
