@@ -15,6 +15,9 @@ include riscv-isa-sim/riscv.mk
 riscv_cc := $(patsubst %.cc, riscv-isa-sim/%.cc, $(riscv_srcs))
 riscv_objs := $(patsubst %.cc, %.o, $(riscv_cc))
 riscv_objs += spike_dpi.o
+riscv_objs += riscv-isa-sim/disasm.o
+riscv_objs += riscv-isa-sim/regnames.o
+riscv_objs += riscv-isa-sim/isa_parser.o
 
 CLEAN_FILES += libspike_dpi.a
 CLEAN_FILES += spike_dpi.o

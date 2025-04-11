@@ -35,7 +35,7 @@ VERILATOR_OPTS += -LDFLAGS "-L"$(abspath ../spike_dpi/riscv-isa-sim/)
 VERILATOR_OPTS += $(abspath ../spike_dpi/libspike_dpi.a)
 VERILATOR_OPTS += $(abspath ./libsoftfloat.a)
 # VERILATOR_OPTS += -LDFLAGS "-lsoftfloat"
-VERILATOR_OPTS += -LDFLAGS "-ldisasm"
+# VERILATOR_OPTS += -LDFLAGS "-ldisasm"
 VERILATOR_OPTS += -LDFLAGS "-lfesvr"
 VERILATOR_OPTS += -LDFLAGS "-lfdt"
 VERILATOR_OPTS += -LDFLAGS "-ldl"
@@ -85,10 +85,11 @@ VERILATOR_OPTS += +define+SIMULATION
 VERILATOR_OPTS += +define+COMPARE_ISS
 VERILATOR_OPTS += --compiler clang
 VERILATOR_OPTS += -Wno-BLKANDNBLK
+VERILATOR_OPTS += -Wno-UNOPTFLAT
 # VERILATOR_OPTS += -Wno-fatal
 VERILATOR_OPTS += -Wno-LITENDIAN
 VERILATOR_OPTS += -Wno-WIDTH
-VERILATOR_OPTS += -CFLAGS "-DRV_XLEN=$(RV_XLEN) -DRV_FLEN=$(RV_FLEN) -DISA=\"$(ISA)\""
+VERILATOR_OPTS += -CFLAGS "-std=c++17 -DRV_XLEN=$(RV_XLEN) -DRV_FLEN=$(RV_FLEN) -DISA=\"$(ISA)\""
 
 VERILATOR_OPTS += ../cpp/tb_elf_loader.cpp
 
