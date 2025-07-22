@@ -93,7 +93,6 @@ generate for (genvar i = 0; i < 32; i++) begin : map_loop
                                                                       .i_data(commit_if_rd_rnid),
                                                                       .o_selected(w_commit_rd_rnid));
 
-    /* verilator lint_off SIDEEFFECT */
     assign {w_update, w_update_rnid} = |w_rd_active_valid ? {1'b1, w_commit_rd_rnid} :
                                        i_restore_from_queue ? {1'b1, i_restore_rn_list[i]} :
                                        select_latest_rnid (i_update,
