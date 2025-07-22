@@ -195,21 +195,21 @@ class verilator_sim:
         self.test_count.value += 1
         print ("%*d / %d : %-*s : " % (int(math.log10(self.test_length)+1), self.test_count.value, self.test_length, self.max_testname_length, testname), end="")
 
-        if "SIMULATION FINISH : FAIL (CODE=100)" in result_stdout.decode('utf-8') :
+        if "SIMULATION FINISH : FAIL (CODE=100)" in result_stdout.decode('utf-8', errors='replace') :
             print ("ERROR", end="\r\n")
             self.result_detail_dict[testname] = "error"
             self.result_dict['error'] += 1
-        elif "SIMULATION FINISH : FAIL" in result_stdout.decode('utf-8') :
+        elif "SIMULATION FINISH : FAIL" in result_stdout.decode('utf-8', errors='replace') :
             print ("MATCH", end="\r\n")
             self.result_detail_dict[testname] = "match"
             self.result_dict['match'] += 1
-        elif "SIMULATION TIMEOUT" in result_stdout.decode('utf-8') :
+        elif "SIMULATION TIMEOUT" in result_stdout.decode('utf-8', errors='replace') :
             print ("TIMEOUT", end="\r\n")
             self.result_detail_dict[testname] = "timeout"
             self.result_dict['timeout'] += 1
-        elif "SIMULATION FINISH : PASS" in result_stdout.decode('utf-8') :
+        elif "SIMULATION FINISH : PASS" in result_stdout.decode('utf-8', errors='replace') :
             if expected_time != 0:
-                match = re.search(r'RUNNING TIME : (\d+)', result_stdout.decode('utf-8'))
+                match = re.search(r'RUNNING TIME : (\d+)', result_stdout.decode('utf-8', errors='replace'))
                 if not match:
                     print ("\nRUNNING TIME can't be get\n")
                     print ("UNKNOWN", end="\r\n")
@@ -231,7 +231,7 @@ class verilator_sim:
                 print ("PASS", end="\r\n")
                 self.result_detail_dict[testname] = "pass"
                 self.result_dict['pass'] += 1
-        elif "COMMIT DEADLOCKED" in result_stdout.decode('utf-8') :
+        elif "COMMIT DEADLOCKED" in result_stdout.decode('utf-8', errors='replace') :
             print ("DEADLOCK", end="\r\n")
             self.result_detail_dict[testname] = "deadlock"
             self.result_dict['deadlock'] += 1
