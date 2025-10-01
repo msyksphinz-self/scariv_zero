@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 from enum import Enum
 import math
@@ -37,10 +37,14 @@ class verilator_sim:
 
         if sim_conf["use_docker"]:
             cli = docker.from_env()
+            # Get HOME directory for proper ccache support
+            home_dir = os.path.expanduser("~")
             build_result = cli.containers.run(image="msyksphinz/scariv:run_env",
                                               auto_remove=True,
                                               user=user_id,
-                                              volumes={current_dir: {'bind': '/work/scariv', 'mode': 'rw'}},
+                                              volumes={current_dir: {'bind': '/work/scariv', 'mode': 'rw'},
+                                                      home_dir: {'bind': home_dir, 'mode': 'rw'}},
+                                              environment={"HOME": home_dir, "USER": os.getenv("USER", "user")},
                                               working_dir="/work/scariv/verilator_sim/",
                                               detach=True,
                                               tty=True,
@@ -79,10 +83,14 @@ class verilator_sim:
         docker_env = dict()
 
         if sim_conf["use_docker"]:
+            # Get HOME directory for proper ccache support
+            home_dir = os.path.expanduser("~")
             build_result = cli.containers.run(image="msyksphinz/scariv:run_env",
                                               auto_remove=True,
                                               user=user_id,
-                                              volumes={current_dir: {'bind': '/work/scariv', 'mode': 'rw'}},
+                                              volumes={current_dir: {'bind': '/work/scariv', 'mode': 'rw'},
+                                                      home_dir: {'bind': home_dir, 'mode': 'rw'}},
+                                              environment={"HOME": home_dir, "USER": os.getenv("USER", "user")},
                                               working_dir="/work/scariv/verilator_sim/",
                                               detach=True,
                                               tty=True,
@@ -104,8 +112,8 @@ class verilator_sim:
 
             build_result.wait()
 
-        if build_result.returncode != 0:
-            return BuildResult.FAIL
+            if build_result.returncode != 0:
+                return BuildResult.FAIL
 
     def execute_test(self, sim_conf, show_stdout, base_dir, testcase, test):
         output_file = os.path.basename(test["name"]) + "." + sim_conf["isa"] + "." + sim_conf["conf"] + ".log"
@@ -130,6 +138,8 @@ class verilator_sim:
         env = os.environ.copy()
 
         if sim_conf["use_docker"]:
+            # Get HOME directory for proper ccache support
+            home_dir = os.path.expanduser("~")
             command = ["docker",
                        "run",
                        "--cap-add=SYS_PTRACE",
@@ -138,7 +148,11 @@ class verilator_sim:
                        "-it",
                        "-v",
                        current_dir + ":/work/scariv",
+                       "-v",
+                       home_dir + ":" + home_dir,
                        "--user", str(user_id) + ":" + str(group_id),
+                       "-e", "HOME=" + home_dir,
+                       "-e", "USER=" + os.getenv("USER", "user"),
                        "-w",
                        "/work/scariv/verilator_sim/" + base_dir + "/" + testcase,
                        ] + run_command
@@ -147,10 +161,14 @@ class verilator_sim:
 
         if sim_conf["use_docker"]:
             cli = docker.from_env()
+            # Get HOME directory for proper ccache support
+            home_dir = os.path.expanduser("~")
             run_process = cli.containers.run(image="msyksphinz/scariv:run_env",
                                              auto_remove=True,
                                              user=user_id,
-                                             volumes={current_dir: {'bind': '/work/scariv', 'mode': 'rw'}},
+                                             volumes={current_dir: {'bind': '/work/scariv', 'mode': 'rw'},
+                                                     home_dir: {'bind': home_dir, 'mode': 'rw'}},
+                                             environment={"HOME": home_dir, "USER": os.getenv("USER", "user")},
                                              working_dir="/work/scariv/verilator_sim/" + base_dir + "/" + testcase,
                                              detach=True,
                                              tty=True,

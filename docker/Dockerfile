@@ -23,7 +23,9 @@ RUN curl -L https://github.com/verilator/verilator/archive/refs/tags/v4.228.tar.
     autoconf && \
     ./configure && \
     make -j$(nproc) && \
-    make install
+    make install && \
+    sed -i 's/CFG_CXXFLAGS_STD_NEWEST = -std=gnu++14/CFG_CXXFLAGS_STD_NEWEST = -std=c++17/' /usr/local/share/verilator/include/verilated.mk && \
+    sed -i 's/CFG_CXXFLAGS_STD_NEWEST = -std=gnu++14/CFG_CXXFLAGS_STD_NEWEST = -std=c++17 -D_GLIBCXX_USE_CXX11_ABI=0/' /usr/local/share/verilator/include/verilated.mk
 
 # -----------------------------
 # RISC-V GNUTools Install
@@ -36,3 +38,5 @@ RUN curl -L https://github.com/riscv-collab/riscv-gnu-toolchain/releases/downloa
 ENV PATH            $RISCV/bin:$PATH
 ENV LD_LIBRARY_PATH $RISCV/lib:$LD_LIBRARY_PATH
 ENV CCACHE_DIR      "work/scariv/ccache"
+
+RUN apt install -y libncurses-dev libtinfo6
