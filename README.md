@@ -13,4 +13,8 @@ pip3 install -r requirements.txt
 
 ### RTL Simulation
 
+```sh
+git submodule update --init --recursive
+```
+
 Go to `verilator_sim/README.md`.
