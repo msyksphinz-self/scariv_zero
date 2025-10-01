@@ -58,7 +58,7 @@ libspike_dpi_exe.so: spike_dpi.cpp riscv-isa-sim-makefile
 libserialdevice.so: serialdevice.cc
 	g++ -o $@ -fPIC -shared $^ -I./riscv-isa-sim/riscv -I./riscv-isa-sim -I./riscv-isa-sim/softfloat -I./riscv-isa-sim/fesvr
 
-spike_main: spike_dpi_exe.o gshare_model_exe.o libspike_dpi.a
+spike_main: riscv-isa-sim/libdisasm.a riscv-isa-sim/libriscv.a spike_dpi_exe.o gshare_model_exe.o libspike_dpi.a
 	g++ -L. -Wl,--export-dynamic -o $@ $^ $(EXE_CFLAGS)
 
 spike_dpi_exe.o: spike_dpi.cpp
@@ -72,7 +72,7 @@ riscv-isa-sim-makefile:
 		cd riscv-isa-sim && ./configure --enable-commitlog --without-boost --without-boost-asio --without-boost-regex; \
 	fi
 	touch -f $@
-	make -C riscv-isa-sim -j$(shell nproc)
+	CXXFLAGS="-std=c++17" make -C riscv-isa-sim -j$(shell nproc)
 	ln -fs riscv-isa-sim/riscv/decode.h
 	ln -fs riscv-isa-sim/config.h
 

@@ -737,11 +737,13 @@ void step_spike(long long rtl_time, long long rtl_pc,
 
   processor_t *p = spike_core->get_core(0);
 
+  insn_t rtl_insn_obj (rtl_insn);
+
   if (rtl_exception) {
     fprintf(compare_log_fp, "%lld : RTL(%d,%d) Exception Cause = %s(%d) PC=%012llx, Inst=%08x, %s\n",
             rtl_time, rtl_cmt_id, rtl_grp_id,
             riscv_excpt_map[rtl_exception_cause], rtl_exception_cause,
-            rtl_pc, rtl_insn, disasm->disassemble(rtl_insn).c_str());
+            rtl_pc, rtl_insn, disasm->disassemble(rtl_insn_obj).c_str());
   }
   if (rtl_exception & ((rtl_exception_cause == 0 ) ||  // Instruction Access Misaligned
                        (rtl_exception_cause == 1 ) ||  // Instruction Access Fault
@@ -799,7 +801,7 @@ void step_spike(long long rtl_time, long long rtl_pc,
   static reg_t prev_instret = -1;
   static bool prev_minstret_access = false;
   if (prev_instret == instret && !prev_minstret_access) {
-    fprintf(compare_log_fp, "instret = %08x, p->step called\n", instret);
+    fprintf(compare_log_fp, "instret = %08lx, p->step called\n", instret);
     p->step(1);
   }
   prev_minstret_access = false;
@@ -1090,7 +1092,7 @@ void record_stq_store(long long rtl_time,
     }
     fprintf(compare_log_fp, "\n");
   } catch (trap_t &t) {
-    fprintf (compare_log_fp, "Catch exception at record_l1d_evict : PA = %08llx, %s\n", paddr, t.name());
+    fprintf (compare_log_fp, "Catch exception at record_l1d_evict : PA = %08llx, %s\n", paddr, t.name().c_str());
   }
 
   if (diff_found) {
@@ -1173,7 +1175,7 @@ void record_l1d_load(long long rtl_time,
     }
     fprintf(compare_log_fp, "\n");
   } catch (trap_t &t) {
-    fprintf (compare_log_fp, "Catch exception at record_l1d_evict : PA = %08llx, %s\n", paddr, t.name());
+    fprintf (compare_log_fp, "Catch exception at record_l1d_evict : PA = %08llx, %s\n", paddr, t.name().c_str());
   }
 
   if (diff_found) {
@@ -1216,7 +1218,7 @@ void record_l1d_evict(long long rtl_time,
     }
     fprintf(compare_log_fp, "\n");
   } catch (trap_t &t) {
-    fprintf (compare_log_fp, "Catch exception at record_l1d_evict : PA = %08llx, %s\n", paddr, t.name());
+    fprintf (compare_log_fp, "Catch exception at record_l1d_evict : PA = %08llx, %s\n", paddr, t.name().c_str());
   }
 
   if (diff_found) {
@@ -1243,7 +1245,7 @@ void step_spike_wo_cmp(int steps)
              instret,
              iss_pc,
              iss_priv == 0 ? 'U' : iss_priv == 2 ? 'S' : 'M',
-             iss_insn, disasm->disassemble(iss_insn).c_str());
+             iss_insn.bits(), disasm->disassemble(iss_insn).c_str());
     fprintf(compare_log_fp, spike_out_str);
     fprintf(stderr, spike_out_str);
   }

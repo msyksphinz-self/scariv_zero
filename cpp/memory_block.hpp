@@ -27,9 +27,9 @@
 
 #pragma once
 
-#include <memory>
 #include <stdint.h>
-#include "./basic.hpp"
+#include <memory>
+#include "basic.hpp"
 
 enum MemoryMode {exec_bit  = 0,
          write_bit = 1,

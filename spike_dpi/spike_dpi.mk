@@ -1,5 +1,6 @@
 VERILATOR_HOME ?= /usr/local/share/verilator
 
+CFLAGS += --std=c++17
 CFLAGS += -I$(VERILATOR_HOME)/include/vltstd/
 CFLAGS += -I$(abspath riscv-isa-sim)/riscv
 CFLAGS += -I$(abspath riscv-isa-sim)
